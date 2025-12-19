@@ -54,6 +54,18 @@ def register_tools(mcp):
         return call_api(f"/users/{user_token}/partlists/{list_id}/parts/", data=data, method="POST")
 
     @mcp.tool()
+    def add_parts_to_list(
+        list_id: str,
+        parts: list[dict]
+    ) -> dict | list:
+        """Add multiple parts to a part list in one call.
+        
+        parts: List of dicts with keys: part_num, color_id, quantity
+        Example: [{"part_num": "3020", "color_id": 0, "quantity": 5}, {"part_num": "3021", "color_id": 72, "quantity": 10}]
+        """
+        return call_api(f"/users/{user_token}/partlists/{list_id}/parts/", data=parts, method="POST")
+
+    @mcp.tool()
     def update_part_in_list(
         list_id: str,
         part_num: str,
@@ -79,6 +91,37 @@ def register_tools(mcp):
             f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/",
             method="DELETE"
         )
+
+    @mcp.tool()
+    def move_parts_between_lists(
+        source_list_id: str,
+        dest_list_id: str,
+        parts: list[dict]
+    ) -> dict:
+        """Move parts from one list to another.
+        
+        parts: List of dicts with keys: part_num, color_id, quantity
+        Example: [{"part_num": "3020", "color_id": 0, "quantity": 5}]
+        
+        Adds parts to destination list, then removes from source list.
+        """
+        # Add to destination
+        add_result = call_api(
+            f"/users/{user_token}/partlists/{dest_list_id}/parts/", 
+            data=parts, 
+            method="POST"
+        )
+        
+        # Delete from source (one by one - API doesn't support batch delete)
+        delete_results = []
+        for part in parts:
+            result = call_api(
+                f"/users/{user_token}/partlists/{source_list_id}/parts/{part['part_num']}/{part['color_id']}/",
+                method="DELETE"
+            )
+            delete_results.append(result)
+        
+        return {"status": "moved", "parts_count": len(parts), "add_result": add_result}
 
     # LET'S NOT GIVE AI THE ABILITY TO DELETE ENTIRE LISTS AT THE MOMENT
     # @mcp.tool()
