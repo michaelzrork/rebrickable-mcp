@@ -1,0 +1,1 @@
+web: python -m rebrickable_mcp.main
