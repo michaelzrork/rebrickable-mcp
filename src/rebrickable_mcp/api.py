@@ -1,5 +1,5 @@
 import httpx
-from config import REBRICKABLE_API_KEY, REBRICKABLE_USER_TOKEN, BASE_URL
+from src.rebrickable_mcp.config import REBRICKABLE_API_KEY, REBRICKABLE_USER_TOKEN, BASE_URL
 
 def get_rebrickable_headers():
     """Generate headers for Rebrickable API requests."""
@@ -8,7 +8,7 @@ def get_rebrickable_headers():
         "Content-Type": "application/json",
     }
 
-def call_api(endpoint: str, params: dict = None) -> dict | list:
+def call_api(endpoint: str, params: dict | None = None) -> dict | list:
     """Make a GET request to the Rebrickable API."""
     url = f"{BASE_URL}/{endpoint}"
     headers = get_rebrickable_headers()

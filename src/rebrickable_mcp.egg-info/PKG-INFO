@@ -5,3 +5,5 @@ Summary: MCP Server for Rebrickable API
 Requires-Python: >=3.10
 Requires-Dist: mcp
 Requires-Dist: httpx
+Requires-Dist: uvicorn
+Requires-Dist: starlette

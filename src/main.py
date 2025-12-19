@@ -3,26 +3,25 @@
 # ------------------------------------------------------------
 
 import os
+import uvicorn
 from mcp.server.fastmcp import FastMCP
-from rebrickable_mcp.config import REBRICKABLE_API_KEY, REBRICKABLE_USER_TOKEN, BASE_URL
-from rebrickable_mcp.api import call_api
+from mcp.server.sse import SseServerTransport
+from starlette.applications import Starlette
+from starlette.routing import Route, Mount
+from starlette.responses import Response
+from src.rebrickable_mcp.config import REBRICKABLE_API_KEY, REBRICKABLE_USER_TOKEN, BASE_URL
+from src.rebrickable_mcp.api import call_api
 
 mcp = FastMCP("Rebrickable MCP Server")
 
 @mcp.tool
 def get_part(part_num: str) -> dict:   
     """Fetch part details from Rebrickable API, including variants."""
-    return call_api(f"lego/parts/{part_num}/")
+    return call_api(f"/lego/parts/{part_num}/")
 
 
 def main():
-    """Main entry point for the server."""
-    import uvicorn
-    from mcp.server.sse import SseServerTransport
-    from starlette.applications import Starlette
-    from starlette.routing import Route, Mount
-    from starlette.responses import Response
-    
+    # HTTP/SSE mode for cloud deployment
     port = int(os.environ.get("PORT", 8000))
     sse = SseServerTransport("/messages/")
     
@@ -37,7 +36,7 @@ def main():
         return Response()
     
     async def health_check(request):
-        return Response("OK")
+        return Response("OK", status_code=200)
     
     app = Starlette(
         routes=[
@@ -47,7 +46,8 @@ def main():
         ]
     )
     
-    print(f"Starting server on port {port}")
+    print(f"Starting TickTick MCP server on port {port}")
+    print(f"Health check available at: /health")
     uvicorn.run(app, host="0.0.0.0", port=port)
 
 if __name__ == "__main__":
