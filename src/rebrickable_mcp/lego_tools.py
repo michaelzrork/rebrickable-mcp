@@ -17,12 +17,23 @@ def register_tools(mcp):
     # ===========================================
 
     @mcp.tool()
-    def list_colors() -> list[dict]:
-        """Get all Rebrickable color names and IDs for quick reference."""
-        return [
+    def list_colors(search: str | None = None) -> list[dict]:
+        """Get all Rebrickable color names and IDs for quick reference.
+        
+        Args:
+            search: Optional text to filter colors by name (case-insensitive).
+                    Example: "green" returns Green, Dark Green, Light Green, etc.
+        """
+        colors = [
             {"id": cid, "name": data["name"]}
             for cid, data in sorted(COLORS.items(), key=lambda x: x[1]["name"])
         ]
+        
+        if search:
+            search_lower = search.lower()
+            colors = [c for c in colors if search_lower in c["name"].lower()]
+        
+        return colors
     
 
     # ===========================================
