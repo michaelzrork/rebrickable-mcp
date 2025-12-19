@@ -156,6 +156,39 @@ def register_tools(mcp):
             method="DELETE"
         )
 
+    def _add_or_update_part_internal(list_id: str, part_num: str, color_id: int, quantity: int) -> dict:
+        """Internal helper for add/update logic - used by move_parts_between_lists."""
+        try:
+            existing = call_api(f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/")
+            old_qty = existing["quantity"]
+            new_qty = old_qty + quantity
+            
+            if new_qty <= 0:
+                call_api(
+                    f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/",
+                    method="DELETE"
+                )
+                return {"status": "deleted", "part_num": part_num, "color_id": color_id, "old_quantity": old_qty, "removed": old_qty}
+            
+            call_api(
+                f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/",
+                data={"quantity": new_qty},
+                method="PUT"
+            )
+            return {"status": "updated", "part_num": part_num, "color_id": color_id, "old_quantity": old_qty, "added": quantity, "new_quantity": new_qty}
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                if quantity <= 0:
+                    return {"status": "no_change", "part_num": part_num, "color_id": color_id, "message": "Part not in list and quantity is not positive"}
+                call_api(
+                    f"/users/{user_token}/partlists/{list_id}/parts/",
+                    data={"part_num": part_num, "color_id": color_id, "quantity": quantity},
+                    method="POST"
+                )
+                return {"status": "added", "part_num": part_num, "color_id": color_id, "quantity": quantity}
+            else:
+                raise
+
     @mcp.tool()
     def move_parts_between_lists(
         source_list_id: str,
@@ -169,23 +202,27 @@ def register_tools(mcp):
         
         Adds parts to destination list, then removes from source list.
         """
-        # Add to destination
-        add_result = call_api(
-            f"/users/{user_token}/partlists/{dest_list_id}/parts/", 
-            data=parts, 
-            method="POST"
-        )
-        
-        # Delete from source (one by one - API doesn't support batch delete)
-        delete_results = []
+        results = []
         for part in parts:
-            result = call_api(
-                f"/users/{user_token}/partlists/{source_list_id}/parts/{part['part_num']}/{part['color_id']}/",
-                method="DELETE"
-            )
-            delete_results.append(result)
+            part_num = part["part_num"]
+            color_id = part["color_id"]
+            quantity = part["quantity"]
+            
+            # Add to destination (handles existing parts)
+            dest_result = _add_or_update_part_internal(dest_list_id, part_num, color_id, quantity)
+            
+            # Remove from source (handles partial moves)
+            source_result = _add_or_update_part_internal(source_list_id, part_num, color_id, -quantity)
+            
+            results.append({
+                "part_num": part_num,
+                "color_id": color_id,
+                "quantity_moved": quantity,
+                "destination": dest_result,
+                "source": source_result
+            })
         
-        return {"status": "moved", "parts_count": len(parts), "add_result": add_result}
+        return {"status": "moved", "parts_count": len(parts), "add_result": results}
 
     # LET'S NOT GIVE AI THE ABILITY TO DELETE ENTIRE LISTS AT THE MOMENT
     # @mcp.tool()
