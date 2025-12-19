@@ -109,7 +109,7 @@ def register_tools(mcp):
         color_id: int,
         quantity: int
     ) -> dict | list:
-        """Replace an existing Part's quantity in the Part List."""
+        """Get details about a specific Part in the Part List."""
         data = {"quantity": quantity}
         return call_api(
             f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/",
