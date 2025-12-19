@@ -1,0 +1,7 @@
+Metadata-Version: 2.4
+Name: rebrickable-mcp
+Version: 0.1.0
+Summary: MCP Server for Rebrickable API
+Requires-Python: >=3.10
+Requires-Dist: mcp
+Requires-Dist: httpx

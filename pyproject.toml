@@ -1,0 +1,13 @@
+[project]
+name = "rebrickable-mcp"
+version = "0.1.0"
+description = "MCP Server for Rebrickable API"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp",
+    "httpx",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
