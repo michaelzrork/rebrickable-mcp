@@ -9,28 +9,20 @@ from mcp.server.sse import SseServerTransport
 from starlette.applications import Starlette
 from starlette.routing import Route, Mount
 from starlette.responses import Response
-from src.rebrickable_mcp.config import REBRICKABLE_USER_TOKEN, BASE_URL
-from src.rebrickable_mcp.api import call_api
+from src.rebrickable_mcp import lego_tools, user_tools
 
 mcp = FastMCP("Rebrickable MCP Server")
-user_token = REBRICKABLE_USER_TOKEN
 
-@mcp.tool()
-def get_part(part_num: str) -> dict | list:   
-    """Fetch part details from Rebrickable API, including variants."""
-    return call_api(f"/lego/parts/{part_num}/", params={})
+# ===========================================
+# Register Tools
+# ===========================================
 
-@mcp.tool()
-def get_part_lists(page: int | None = None, page_size: int | None = None) -> dict | list:
-    """Get a list of all the user's Part Lists."""
-    params = {k: v for k, v in {"page": page, "page_size": page_size}.items() if v is not None}
-    return call_api(f"/users/{user_token}/partlists/",params)
+user_tools.register_tools(mcp)
+lego_tools.register_tools(mcp)
 
-@mcp.tool()
-def get_parts_from_list_id(list_id: str, page: int | None = None, page_size: int | None = None, ordering: str | None = None):
-    """Get a list of all the Parts in a specific Part List."""
-    params = {k: v for k, v in {"page": page, "page_size": page_size, "ordering": ordering}.items() if v is not None}
-    return call_api(f"/users/{user_token}/partlists/{list_id}/parts/")
+# ===========================================
+# Server Setup
+# ===========================================
 
 def main():
     # HTTP/SSE mode for cloud deployment
