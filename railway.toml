@@ -2,4 +2,4 @@
 command = "pip install ."
 
 [deploy]
-startCommand = "python -m main"
+startCommand = "python -m src.main"
