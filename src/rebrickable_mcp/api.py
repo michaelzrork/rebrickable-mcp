@@ -8,7 +8,7 @@ def get_rebrickable_headers():
         "Content-Type": "application/json",
     }
 
-def call_api(endpoint: str, params: dict | None = None) -> dict | list:
+def call_api(endpoint: str, params: dict | None = None) -> dict:
     """Make a GET request to the Rebrickable API."""
     url = f"{BASE_URL}/{endpoint}"
     headers = get_rebrickable_headers()

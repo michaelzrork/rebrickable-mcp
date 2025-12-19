@@ -14,10 +14,10 @@ from src.rebrickable_mcp.api import call_api
 
 mcp = FastMCP("Rebrickable MCP Server")
 
-@mcp.tool
+@mcp.tool()
 def get_part(part_num: str) -> dict:   
     """Fetch part details from Rebrickable API, including variants."""
-    return call_api(f"/lego/parts/{part_num}/")
+    return call_api(f"lego/parts/{part_num}/", params={})
 
 
 def main():
