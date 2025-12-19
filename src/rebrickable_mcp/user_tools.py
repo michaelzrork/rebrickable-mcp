@@ -77,12 +77,22 @@ def register_tools(mcp):
         
         If the part+color doesn't exist in the list, adds it with the given quantity.
         If it already exists, increases the quantity by the given amount.
+        If the resulting quantity would be 0 or less, deletes the part from the list.
         """
         try:
             # Check if part exists in list
             existing = call_api(f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/")
             old_qty = existing["quantity"]
             new_qty = old_qty + quantity
+            
+            if new_qty <= 0:
+                # Delete if quantity would be 0 or negative
+                call_api(
+                    f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/",
+                    method="DELETE"
+                )
+                return {"status": "deleted", "part_num": part_num, "color_id": color_id, "old_quantity": old_qty, "removed": old_qty}
+            
             # Update with new total
             call_api(
                 f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/",
@@ -92,7 +102,9 @@ def register_tools(mcp):
             return {"status": "updated", "part_num": part_num, "color_id": color_id, "old_quantity": old_qty, "added": quantity, "new_quantity": new_qty}
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 404:
-                # Doesn't exist, add fresh
+                # Doesn't exist, add fresh (only if positive quantity)
+                if quantity <= 0:
+                    return {"status": "no_change", "part_num": part_num, "color_id": color_id, "message": "Part not in list and quantity is not positive"}
                 call_api(
                     f"/users/{user_token}/partlists/{list_id}/parts/",
                     data={"part_num": part_num, "color_id": color_id, "quantity": quantity},
