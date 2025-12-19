@@ -5,6 +5,7 @@
 from mcp.server.fastmcp import FastMCP
 from src.rebrickable_mcp.config import REBRICKABLE_USER_TOKEN
 from src.rebrickable_mcp.api import call_api
+import httpx
 
 mcp = FastMCP("Rebrickable MCP Server")
 user_token = REBRICKABLE_USER_TOKEN
@@ -49,7 +50,7 @@ def register_tools(mcp):
         color_id: int,
         quantity: int = 1
     ) -> dict | list:
-        """Add a part to a part list. If part+color already exists, updates quantity."""
+        """Add a part to a part list. If part+color already exists, returns error - use add_or_update_part instead."""
         data = {"part_num": part_num, "color_id": color_id, "quantity": quantity}
         return call_api(f"/users/{user_token}/partlists/{list_id}/parts/", data=data, method="POST")
 
@@ -65,6 +66,57 @@ def register_tools(mcp):
         """
         return call_api(f"/users/{user_token}/partlists/{list_id}/parts/", data=parts, method="POST")
 
+    @mcp.tool()
+    def add_or_update_part(
+        list_id: str,
+        part_num: str,
+        color_id: int,
+        quantity: int = 1
+    ) -> dict:
+        """Add a part to a list, or increase quantity if it already exists.
+        
+        If the part+color doesn't exist in the list, adds it with the given quantity.
+        If it already exists, increases the quantity by the given amount.
+        """
+        try:
+            # Check if part exists in list
+            existing = call_api(f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/")
+            old_qty = existing["quantity"]
+            new_qty = old_qty + quantity
+            # Update with new total
+            call_api(
+                f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/",
+                data={"quantity": new_qty},
+                method="PUT"
+            )
+            return {"status": "updated", "part_num": part_num, "color_id": color_id, "old_quantity": old_qty, "added": quantity, "new_quantity": new_qty}
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                # Doesn't exist, add fresh
+                call_api(
+                    f"/users/{user_token}/partlists/{list_id}/parts/",
+                    data={"part_num": part_num, "color_id": color_id, "quantity": quantity},
+                    method="POST"
+                )
+                return {"status": "added", "part_num": part_num, "color_id": color_id, "quantity": quantity}
+            else:
+                raise
+    
+    @mcp.tool()
+    def get_part_in_list(
+        list_id: str,
+        part_num: str,
+        color_id: int,
+        quantity: int
+    ) -> dict | list:
+        """Replace an existing Part's quantity in the Part List."""
+        data = {"quantity": quantity}
+        return call_api(
+            f"/users/{user_token}/partlists/{list_id}/parts/{part_num}/{color_id}/",
+            data=data,
+            method="GET"
+        )
+    
     @mcp.tool()
     def update_part_in_list(
         list_id: str,
