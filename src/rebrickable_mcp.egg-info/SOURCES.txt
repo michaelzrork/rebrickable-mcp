@@ -1,7 +1,10 @@
 pyproject.toml
 src/main.py
 src/rebrickable_mcp/api.py
+src/rebrickable_mcp/cache.py
 src/rebrickable_mcp/config.py
+src/rebrickable_mcp/lego_tools.py
+src/rebrickable_mcp/user_tools.py
 src/rebrickable_mcp.egg-info/PKG-INFO
 src/rebrickable_mcp.egg-info/SOURCES.txt
 src/rebrickable_mcp.egg-info/dependency_links.txt

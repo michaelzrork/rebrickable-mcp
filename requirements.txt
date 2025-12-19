@@ -1,3 +1,5 @@
 mcp
 httpx
+csv
+zipfile
 -e .

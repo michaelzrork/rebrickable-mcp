@@ -10,8 +10,12 @@ from starlette.applications import Starlette
 from starlette.routing import Route, Mount
 from starlette.responses import Response
 from src.rebrickable_mcp import lego_tools, user_tools
+from src.rebrickable_mcp.cache import load_colors
 
 mcp = FastMCP("Rebrickable MCP Server")
+
+# Load colors on startup
+load_colors()
 
 # ===========================================
 # Register Tools
