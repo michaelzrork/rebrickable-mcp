@@ -2,4 +2,4 @@
 command = "pip install ."
 
 [deploy]
-startCommand = "python -m rebrickable_mcp.main"
+startCommand = "python -m main"
